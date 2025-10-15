@@ -32,6 +32,10 @@ Authored by Nova (GPT‑5) — Augment Agent, for Ren (menelly).
 - Toggle relay: Ctrl+Shift+. (Windows/Linux)
 - Toggle relay: Command+Shift+. (macOS)
 
+
+## Privacy mode (no static IPs)
+This extension does not need your private Tailscale IP in the manifest. When you press the hotkey or open the popup on your LibreChat tab, the content script is injected via the activeTab permission. Nothing about your private origin is hardcoded in the repo.
+
 ## Roadmap
 - Wire ChatGPT + LibreChat selectors
 - Per-site toggles and scopes

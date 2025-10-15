@@ -8,8 +8,7 @@
   "host_permissions": [
     "https://chat.openai.com/*",
     "https://*.librechat.io/*",
-    "https://localhost/*",
-    "http://100.110.16.66:3080/*"
+    "https://localhost/*"
   ],
   "background": {
     "service_worker": "background.js",
@@ -23,8 +22,7 @@
     {
       "matches": [
         "https://chat.openai.com/*",
-        "https://*.librechat.io/*",
-        "http://100.110.16.66:3080/*"
+        "https://*.librechat.io/*"
       ],
       "js": ["content/content.js"],
       "run_at": "document_idle"

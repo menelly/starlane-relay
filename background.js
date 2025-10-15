@@ -39,6 +39,14 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 // Hotkey: toggle relay
 chrome.commands?.onCommand.addListener(async (command) => {
   if (command === 'toggle-relay') {
+    // Ensure content script is present on the active tab without exposing private origins
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab?.id) {
+        await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content/content.js'] });
+      }
+    } catch (_) {}
+
     const state = await chrome.storage.sync.get(DEFAULTS);
     const next = { relayEnabled: !state.relayEnabled };
     await chrome.storage.sync.set(next);
