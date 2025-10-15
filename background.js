@@ -5,31 +5,102 @@
 
 const DEFAULTS = {
   relayEnabled: false, // Safety lock ON by default (relay disabled)
-  guardTag: false      // Guard tag OFF by default
+  guardTag: false,     // Guard tag OFF by default
+  relayOn: false,
+  turnLimit: 10,
+  turnCount: 0,
+  pairA: null,
+  pairB: null
 };
 
 chrome.runtime.onInstalled.addListener(async () => {
   await chrome.storage.sync.set(DEFAULTS);
 });
 
+async function getState() { return await chrome.storage.sync.get(DEFAULTS); }
+async function setState(patch) {
+  const next = { ...(await getState()), ...patch };
+  await chrome.storage.sync.set(patch);
+  // broadcast delta
+  chrome.tabs.query({}, (tabs) => {
+    for (const t of tabs) {
+      try { chrome.tabs.sendMessage(t.id, { type: 'starlane:stateChanged', ...patch }); } catch {}
+    }
+  });
+  return next;
+}
+
+async function appendTranscript(entry) {
+  const bag = await chrome.storage.local.get({ transcript: [] });
+  bag.transcript.push(entry);
+  await chrome.storage.local.set({ transcript: bag.transcript });
+}
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg?.type === 'starlane:getState') {
-    chrome.storage.sync.get(DEFAULTS).then(sendResponse);
+    getState().then(sendResponse);
     return true;
   }
   if (msg?.type === 'starlane:setState') {
-    const next = {};
-    if (typeof msg.relayEnabled === 'boolean') next.relayEnabled = msg.relayEnabled;
-    if (typeof msg.guardTag === 'boolean') next.guardTag = msg.guardTag;
-    chrome.storage.sync.set(next).then(() => {
-      // Broadcast to all tabs for immediate UI/DOM reflection
-      chrome.tabs.query({}, (tabs) => {
-        for (const t of tabs) {
-          chrome.tabs.sendMessage(t.id, { type: 'starlane:stateChanged', ...next }).catch(() => {});
-        }
-      });
-      sendResponse({ ok: true });
+    const patch = {};
+    if (typeof msg.relayEnabled === 'boolean') patch.relayEnabled = msg.relayEnabled;
+    if (typeof msg.guardTag === 'boolean') patch.guardTag = msg.guardTag;
+    setState(patch).then(() => sendResponse({ ok: true }));
+    return true;
+  }
+  if (msg?.type === 'starlane:getRelayState') {
+    getState().then(sendResponse); return true;
+  }
+  if (msg?.type === 'starlane:pairHere') {
+    const side = (msg.side || 'A').toUpperCase();
+    chrome.tabs.query({ active: true, currentWindow: true }, async ([tab]) => {
+      try {
+        if (tab?.id) {
+          await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content/content.js'] });
+          const patch = side === 'A' ? { pairA: tab.id } : { pairB: tab.id };
+          await setState(patch);
+          sendResponse({ ok: true, side, tabId: tab.id });
+        } else sendResponse({ ok: false });
+      } catch (_) { sendResponse({ ok: false }); }
     });
+    return true;
+  }
+  if (msg?.type === 'starlane:startRelay') {
+    setState({ relayOn: true, turnCount: 0 }).then(() => sendResponse({ ok: true }));
+    return true;
+  }
+  if (msg?.type === 'starlane:stopRelay') {
+    setState({ relayOn: false }).then(() => sendResponse({ ok: true }));
+    return true;
+  }
+  if (msg?.type === 'starlane:setTurnLimit') {
+    const n = Math.max(1, Math.min(200, Number(msg.value) || 10));
+    setState({ turnLimit: n }).then(() => sendResponse({ ok: true, value: n }));
+    return true;
+  }
+  if (msg?.type === 'starlane:getTranscript') {
+    chrome.storage.local.get({ transcript: [] }).then(sendResponse); return true;
+  }
+  if (msg?.type === 'starlane:assistantUtterance') {
+    (async () => {
+      const st = await getState();
+      const tabId = sender.tab?.id;
+      const side = tabId === st.pairA ? 'A' : (tabId === st.pairB ? 'B' : '?');
+      const entry = { t: Date.now(), side, text: msg.text };
+      await appendTranscript(entry);
+      if (!st.relayOn || st.turnCount >= st.turnLimit) return;
+      const otherId = side === 'A' ? st.pairB : (side === 'B' ? st.pairA : null);
+      if (!otherId) return;
+      try {
+        // forward with timestamp hint
+        chrome.tabs.sendMessage(otherId, { type: 'starlane:inject', text: msg.text, withTime: true });
+        await setState({ turnCount: st.turnCount + 1 });
+        if (st.turnCount + 1 >= st.turnLimit) {
+          await setState({ relayOn: false });
+        }
+      } catch (_) {}
+      sendResponse({ ok: true });
+    })();
     return true;
   }
 });

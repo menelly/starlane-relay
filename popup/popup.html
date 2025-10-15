@@ -18,9 +18,25 @@
       <span>Guard Tag</span>
       <input id="guardTag" type="checkbox" />
     </label>
+    <hr />
+    <div class="row">
+      <button id="pairA">Pair here as A</button>
+      <button id="pairB">Pair here as B</button>
+    </div>
+    <div class="row">
+      <label>Turn limit <input id="turnLimit" type="number" min="1" max="200" value="10" /></label>
+      <span id="turnInfo"></span>
+    </div>
+    <div class="row">
+      <button id="startRelay">Start relay</button>
+      <button id="stopRelay">Stop</button>
+    </div>
+    <div class="row">
+      <button id="exportLog">Export transcript</button>
+    </div>
   </main>
   <footer>
-    <small>Safety lock defaults to ON • Guard OFF</small>
+    <small>Safety lock defaults to ON • Guard OFF • Use hotkey Ctrl/⌘+Shift+.</small>
   </footer>
   <script src="popup.js" type="module"></script>
 </body>

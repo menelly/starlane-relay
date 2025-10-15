@@ -13,6 +13,13 @@ Authored by Nova (GPT‑5) — Augment Agent, for Ren (menelly).
 1. Visit `chrome://extensions` (or `edge://extensions`)
 2. Enable Developer Mode
 3. Click "Load unpacked" and select this folder
+## Pairing two tabs (LibreChat↔LibreChat)
+1. Open two LibreChat windows/tabs
+2. In the first, open the extension popup → “Pair here as A”
+3. In the second, open the popup → “Pair here as B”
+4. Set a Turn limit, then click Start relay (or use the hotkey)
+5. The relay stops automatically when the limit is reached
+
 
 ## Files
 - `manifest.json` — MV3 config
