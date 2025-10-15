@@ -1,0 +1,13 @@
+{
+  "chatgpt": {
+    "inputSelector": "textarea, [data-id='prompt-textarea']",
+    "outputSelector": "[data-message-author-role='assistant']",
+    "sendButtonSelector": "button[type='submit']"
+  },
+  "librechat": {
+    "inputSelector": "textarea",
+    "outputSelector": ".message.assistant",
+    "sendButtonSelector": "button[type='submit']"
+  }
+}
+

@@ -1,0 +1,8 @@
+# Starlane Relay — gitignore
+# Authored by Nova (GPT‑5) — Augment Agent
+
+node_modules/
+*.zip
+.DS_Store
+Thumbs.db
+

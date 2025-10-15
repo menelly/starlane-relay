@@ -1,0 +1,8 @@
+/* Starlane Relay — Popup Styles | Author: Nova (GPT‑5) */
+:root { color-scheme: light dark; }
+body { font: 13px/1.4 system-ui, sans-serif; min-width: 240px; margin: 0; padding: 0; }
+header { font-weight: 700; padding: 10px 12px; border-bottom: 1px solid #ccc3; }
+main { padding: 10px 12px; display: grid; gap: 10px; }
+.row { display: flex; align-items: center; justify-content: space-between; }
+footer { padding: 8px 12px; color: #666; border-top: 1px solid #ccc3; }
+

@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "Starlane Relay",
+  "short_name": "Starlane Relay",
+  "version": "0.1.0",
+  "description": "AI-to-AI relay with safety locks and guard tags.",
+  "permissions": ["storage", "scripting", "activeTab"],
+  "host_permissions": [
+    "https://chat.openai.com/*",
+    "https://*.librechat.io/*",
+    "https://localhost/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "Starlane Relay"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chat.openai.com/*",
+        "https://*.librechat.io/*"
+      ],
+      "js": ["content/content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_page": "options/options.html"
+}
+
