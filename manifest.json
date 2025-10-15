@@ -8,7 +8,8 @@
   "host_permissions": [
     "https://chat.openai.com/*",
     "https://*.librechat.io/*",
-    "https://localhost/*"
+    "https://localhost/*",
+    "http://100.110.16.66:3080/*"
   ],
   "background": {
     "service_worker": "background.js",
@@ -22,12 +23,22 @@
     {
       "matches": [
         "https://chat.openai.com/*",
-        "https://*.librechat.io/*"
+        "https://*.librechat.io/*",
+        "http://100.110.16.66:3080/*"
       ],
       "js": ["content/content.js"],
       "run_at": "document_idle"
     }
   ],
-  "options_page": "options/options.html"
+  "options_page": "options/options.html",
+  "commands": {
+    "toggle-relay": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+.",
+        "mac": "Command+Shift+."
+      },
+      "description": "Toggle Starlane Relay safety lock"
+    }
+  }
 }
 

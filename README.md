@@ -27,6 +27,11 @@ Authored by Nova (GPT‑5) — Augment Agent, for Ren (menelly).
 - `relayEnabled=true` means Safety Lock OFF → DOM gets `data-starlane-relay="on"`
 - `guardTag=true` → DOM gets `data-starlane-guard="on"`
 
+
+## Hotkey
+- Toggle relay: Ctrl+Shift+. (Windows/Linux)
+- Toggle relay: Command+Shift+. (macOS)
+
 ## Roadmap
 - Wire ChatGPT + LibreChat selectors
 - Per-site toggles and scopes

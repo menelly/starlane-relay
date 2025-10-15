@@ -34,3 +34,18 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
 });
 
+
+
+// Hotkey: toggle relay
+chrome.commands?.onCommand.addListener(async (command) => {
+  if (command === 'toggle-relay') {
+    const state = await chrome.storage.sync.get(DEFAULTS);
+    const next = { relayEnabled: !state.relayEnabled };
+    await chrome.storage.sync.set(next);
+    chrome.tabs.query({}, (tabs) => {
+      for (const t of tabs) {
+        try { chrome.tabs.sendMessage(t.id, { type: 'starlane:stateChanged', ...next }); } catch {}
+      }
+    });
+  }
+});
