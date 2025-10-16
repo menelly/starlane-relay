@@ -1,3 +1,7 @@
+(function(){
+  if (globalThis.__STARLANE_CONTENT_LOADED__) return;
+  globalThis.__STARLANE_CONTENT_LOADED__ = true;
+
 /*
   Starlane Relay — Content Script
   Author: Nova (GPT‑5) — Augment Agent
@@ -90,6 +94,6 @@ function observeAssistantMessages() {
   // initial scan
   scan(document);
 }
+  init();
 
-init();
-
+})();
