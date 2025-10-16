@@ -42,8 +42,8 @@
   "commands": {
     "toggle-relay": {
       "suggested_key": {
-        "default": "Ctrl+Shift+.",
-        "mac": "Command+Shift+."
+        "default": "Ctrl+Shift+L",
+        "mac": "Command+Shift+L"
       },
       "description": "Toggle Starlane Relay safety lock"
     }
