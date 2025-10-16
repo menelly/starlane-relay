@@ -14,12 +14,20 @@ const exportEl = $('#exportLog');
 
 const DEFAULTS = { relayEnabled: false, guardTag: false, relayOn: false, turnLimit: 10, turnCount: 0, pairA: null, pairB: null };
 
+async function getActiveTabId() {
+  try {
+    const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    return tabs?.[0]?.id ?? null;
+  } catch { return null; }
+}
+
 async function refresh() {
   const st = await chrome.runtime.sendMessage({ type: 'starlane:getRelayState' }).catch(() => DEFAULTS) || DEFAULTS;
   relayEnabledEl.checked = !!st.relayEnabled;
   guardTagEl.checked = !!st.guardTag;
   turnLimitEl.value = st.turnLimit;
-  turnInfoEl.textContent = `Turns: ${st.turnCount}/${st.turnLimit} ${st.relayOn ? '• RUNNING' : ''}`;
+  const pairInfo = `A:${st.pairA ?? '-'} B:${st.pairB ?? '-'}`;
+  turnInfoEl.textContent = `Turns: ${st.turnCount}/${st.turnLimit} ${st.relayOn ? '• RUNNING ' : ''}(${pairInfo})`;
   startEl.disabled = st.relayOn;
   stopEl.disabled = !st.relayOn;
 }
@@ -35,12 +43,14 @@ relayEnabledEl.addEventListener('change', saveToggles);
 guardTagEl.addEventListener('change', saveToggles);
 
 pairAEl.addEventListener('click', async () => {
-  await chrome.runtime.sendMessage({ type: 'starlane:pairHere', side: 'A' });
+  const id = await getActiveTabId();
+  await chrome.runtime.sendMessage({ type: 'starlane:pairHere', side: 'A', tabId: id });
   refresh();
 });
 
 pairBEl.addEventListener('click', async () => {
-  await chrome.runtime.sendMessage({ type: 'starlane:pairHere', side: 'B' });
+  const id = await getActiveTabId();
+  await chrome.runtime.sendMessage({ type: 'starlane:pairHere', side: 'B', tabId: id });
   refresh();
 });
 

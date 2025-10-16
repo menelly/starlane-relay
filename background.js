@@ -53,16 +53,21 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
   if (msg?.type === 'starlane:pairHere') {
     const side = (msg.side || 'A').toUpperCase();
-    chrome.tabs.query({ active: true, currentWindow: true }, async ([tab]) => {
+    const targetId = msg.tabId || null;
+    const useTab = async (id) => {
+      if (!id) { sendResponse({ ok: false, error: 'no-tab' }); return; }
       try {
-        if (tab?.id) {
-          await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content/content.js'] });
-          const patch = side === 'A' ? { pairA: tab.id } : { pairB: tab.id };
-          await setState(patch);
-          sendResponse({ ok: true, side, tabId: tab.id });
-        } else sendResponse({ ok: false });
+        await chrome.scripting.executeScript({ target: { tabId: id }, files: ['content/content.js'] });
+        const patch = side === 'A' ? { pairA: id } : { pairB: id };
+        await setState(patch);
+        sendResponse({ ok: true, side, tabId: id });
       } catch (_) { sendResponse({ ok: false }); }
-    });
+    };
+    if (targetId) {
+      useTab(targetId);
+    } else {
+      chrome.tabs.query({ active: true, lastFocusedWindow: true }, ([tab]) => useTab(tab?.id));
+    }
     return true;
   }
   if (msg?.type === 'starlane:startRelay') {
