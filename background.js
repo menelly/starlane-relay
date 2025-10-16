@@ -18,14 +18,18 @@ chrome.runtime.onInstalled.addListener(async () => {
 });
 
 async function getState() { return await chrome.storage.sync.get(DEFAULTS); }
+function safeSend(tabId, payload) {
+  try { chrome.tabs.sendMessage(tabId, payload, () => void chrome.runtime.lastError); } catch {}
+}
+async function ensureInjected(tabId) {
+  try { await chrome.scripting.executeScript({ target: { tabId }, files: ['content/content.js'] }); } catch {}
+}
 async function setState(patch) {
   const next = { ...(await getState()), ...patch };
   await chrome.storage.sync.set(patch);
   // broadcast delta
   chrome.tabs.query({}, (tabs) => {
-    for (const t of tabs) {
-      try { chrome.tabs.sendMessage(t.id, { type: 'starlane:stateChanged', ...patch }); } catch {}
-    }
+    for (const t of tabs) safeSend(t.id, { type: 'starlane:stateChanged', ...patch });
   });
   return next;
 }
@@ -71,7 +75,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return true;
   }
   if (msg?.type === 'starlane:startRelay') {
-    setState({ relayOn: true, turnCount: 0 }).then(() => sendResponse({ ok: true }));
+    (async () => {
+      const st = await getState();
+      if (st.pairA) await ensureInjected(st.pairA);
+      if (st.pairB) await ensureInjected(st.pairB);
+      await setState({ relayOn: true, turnCount: 0 });
+      sendResponse({ ok: true });
+    })();
     return true;
   }
   if (msg?.type === 'starlane:stopRelay') {
@@ -97,12 +107,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       const otherId = side === 'A' ? st.pairB : (side === 'B' ? st.pairA : null);
       if (!otherId) return;
       try {
-        // forward with timestamp hint
-        chrome.tabs.sendMessage(otherId, { type: 'starlane:inject', text: msg.text, withTime: true });
+        await ensureInjected(otherId);
+        safeSend(otherId, { type: 'starlane:inject', text: msg.text, withTime: true });
         await setState({ turnCount: st.turnCount + 1 });
-        if (st.turnCount + 1 >= st.turnLimit) {
-          await setState({ relayOn: false });
-        }
+        if (st.turnCount + 1 >= st.turnLimit) await setState({ relayOn: false });
       } catch (_) {}
       sendResponse({ ok: true });
     })();
@@ -127,9 +135,7 @@ chrome.commands?.onCommand.addListener(async (command) => {
     const next = { relayEnabled: !state.relayEnabled };
     await chrome.storage.sync.set(next);
     chrome.tabs.query({}, (tabs) => {
-      for (const t of tabs) {
-        try { chrome.tabs.sendMessage(t.id, { type: 'starlane:stateChanged', ...next }); } catch {}
-      }
+      for (const t of tabs) safeSend(t.id, { type: 'starlane:stateChanged', ...next });
     });
   }
 });
