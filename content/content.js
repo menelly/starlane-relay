@@ -54,15 +54,35 @@ function getSelectorsForPage() {
 function injectAndSend(text, withTime) {
   try {
     const sel = getSelectorsForPage();
-    const ta = document.querySelector(sel.inputSelector || 'textarea');
-    const sendBtn = document.querySelector(sel.sendButtonSelector || 'button[type="submit"]');
-    if (!ta || !sendBtn) return;
+    const inputSel = sel.inputSelector || 'textarea, [contenteditable="true"]';
+    const sendSel = sel.sendButtonSelector || 'button[type="submit"], button[aria-label*="Send" i], [data-testid*="send" i]';
+    const ta = document.querySelector(inputSel);
+    const sendBtn = document.querySelector(sendSel);
+    if (!ta) return;
     const stamp = withTime ? `\n\n[starlane time: ${new Date().toISOString()}]` : '';
     const payload = `${text}${stamp}`;
     ta.focus();
-    ta.value = payload;
-    ta.dispatchEvent(new Event('input', { bubbles: true }));
-    setTimeout(() => sendBtn.click(), 50);
+    if (ta.tagName === 'TEXTAREA' || ta.tagName === 'INPUT') {
+      ta.value = payload;
+      ta.dispatchEvent(new Event('input', { bubbles: true }));
+    } else if (ta.isContentEditable) {
+      const range = document.createRange();
+      range.selectNodeContents(ta);
+      range.collapse(false);
+      const selObj = window.getSelection();
+      selObj.removeAllRanges();
+      selObj.addRange(range);
+      document.execCommand('insertText', false, payload);
+      ta.dispatchEvent(new InputEvent('input', { bubbles: true }));
+    }
+    if (sendBtn) {
+      setTimeout(() => sendBtn.click(), 50);
+    } else {
+      const ev = (type) => new KeyboardEvent(type, { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true });
+      ta.dispatchEvent(ev('keydown'));
+      ta.dispatchEvent(ev('keypress'));
+      ta.dispatchEvent(ev('keyup'));
+    }
   } catch (_) {}
 }
 
@@ -70,9 +90,12 @@ function observeAssistantMessages() {
   const root = document.body;
   if (!root) return;
   const seen = new WeakSet();
+  const defaultOutput = '[data-message-author-role="assistant"], .message.assistant, [data-testid*="assistant" i], [data-author-role="assistant"], .assistant';
+  const sel = getSelectorsForPage();
+  const outSel = sel.outputSelector || defaultOutput;
   const isAssistantNode = (n) => {
     if (!(n instanceof HTMLElement)) return false;
-    return n.matches?.('[data-message-author-role="assistant"], .message.assistant');
+    return n.matches?.(outSel);
   };
   const extractText = (n) => (n.innerText || '').trim();
   const emit = (text) => {
@@ -84,7 +107,7 @@ function observeAssistantMessages() {
       seen.add(node);
       emit(extractText(node));
     }
-    node.querySelectorAll?.('[data-message-author-role="assistant"], .message.assistant')
+    node.querySelectorAll?.(outSel)
       .forEach((el) => { if (!seen.has(el)) { seen.add(el); emit(extractText(el)); } });
   };
   const mo = new MutationObserver((muts) => muts.forEach((m) => {
