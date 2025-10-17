@@ -1,13 +1,12 @@
 {
   "chatgpt": {
-    "inputSelector": "textarea, [data-id='prompt-textarea']",
-    "outputSelector": "[data-message-author-role='assistant']",
-    "sendButtonSelector": "button[type='submit']"
+    "inputSelector": "textarea, [data-id='prompt-textarea'], [contenteditable='true']",
+    "outputSelector": "[data-message-author-role='assistant'], .markdown.prose",
+    "sendButtonSelector": "button[type='submit'], button[aria-label*='Send' i], [data-testid*='send' i]"
   },
   "librechat": {
-    "inputSelector": "textarea",
-    "outputSelector": ".message.assistant",
-    "sendButtonSelector": "button[type='submit']"
+    "inputSelector": "textarea, [contenteditable='true'], .ProseMirror",
+    "outputSelector": ".markdown.prose.message-content, .message.assistant, [data-author-role='assistant'], [data-testid*='assistant' i]",
+    "sendButtonSelector": "button[type='submit'], button[aria-label*='Send' i], [data-testid*='send' i]"
   }
 }
-
